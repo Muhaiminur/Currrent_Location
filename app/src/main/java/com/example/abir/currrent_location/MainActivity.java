@@ -1,5 +1,6 @@
 package com.example.abir.currrent_location;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -17,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.karan.churi.PermissionManager.PermissionManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,14 +28,26 @@ public class MainActivity extends AppCompatActivity {
     double latitude;
     TextView lat;
     TextView lon;
+    PermissionManager permissionManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        // Get token
-        String token = FirebaseInstanceId.getInstance().getToken();
-        Toast.makeText(MainActivity.this, token, Toast.LENGTH_SHORT).show();
-        Log.d("lol", "Refreshed token: " + token);
+        permissionManager=new PermissionManager() {};
+        permissionManager.checkAndRequestPermissions(this);
+        if(getLocationMode() != 3) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.MyAlertDialogMaterialStyle);
+            builder.setTitle("Select High Accuracy Mood")
+                    .setMessage("You Must select high Accuracy to send report")
+                    .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                        }
+                    })
+                    .show();
+
+        }
         mContext=this;
         /*locationManager=(LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
         try {
@@ -52,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
-
                 GPSTracker gps = new GPSTracker(getApplication());
                 latitude = gps.getLatitude();
                 longitude = gps.getLongitude();
@@ -61,68 +74,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-    /*LocationListener locationListenerGPS=new LocationListener() {
-        @Override
-        public void onLocationChanged(android.location.Location location) {
-            latitude=location.getLatitude();
-            longitude=location.getLongitude();
-            String msg="New Latitude: "+latitude + "New Longitude: "+longitude;
-            Toast.makeText(mContext,msg,Toast.LENGTH_LONG).show();
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-
-        }
-    };
-
-
-    protected void onResume(){
-        super.onResume();
-        isLocationEnabled();
+    @Override
+    public void onRequestPermissionsResult(int requestCode,String permissions[], int[] grantResults) {
+        permissionManager.checkResult(requestCode,permissions, grantResults);
     }
+    public int getLocationMode() {
+        try {
+            return Settings.Secure.getInt(getContentResolver(), Settings.Secure.LOCATION_MODE);
+        }catch (Exception e){
 
-    private void isLocationEnabled() {
-
-        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-            AlertDialog.Builder alertDialog=new AlertDialog.Builder(mContext);
-            alertDialog.setTitle("Enable Location");
-            alertDialog.setMessage("Your locations setting is not enabled. Please enabled it in settings menu.");
-            alertDialog.setPositiveButton("Location Settings", new DialogInterface.OnClickListener(){
-                public void onClick(DialogInterface dialog, int which){
-                    Intent intent=new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                    startActivity(intent);
-                }
-            });
-            alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener(){
-                public void onClick(DialogInterface dialog, int which){
-                    dialog.cancel();
-                }
-            });
-            AlertDialog alert=alertDialog.create();
-            alert.show();
         }
-        else{
-            AlertDialog.Builder alertDialog=new AlertDialog.Builder(mContext);
-            alertDialog.setTitle("Confirm Location");
-            alertDialog.setMessage("Your Location is enabled, please enjoy");
-            alertDialog.setNegativeButton("Back to interface",new DialogInterface.OnClickListener(){
-                public void onClick(DialogInterface dialog, int which){
-                    dialog.cancel();
-                }
-            });
-            AlertDialog alert=alertDialog.create();
-            alert.show();
-        }
-    }*/
+        return 11;
+    }
 }
